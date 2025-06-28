@@ -1,9 +1,11 @@
+
 import { useState } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import SplashScreen from "./components/SplashScreen";
 import BottomNavigation from "./components/BottomNavigation";
 import HomePage from "./pages/HomePage";
@@ -33,33 +35,35 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen bg-gray-950">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/book/:id" element={<BookDetailPage />} />
-              <Route path="/player/:id" element={<PlayerPage />} />
-              <Route path="/library" element={<LibraryPage />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="users" element={<UserDataPage />} />
-                <Route path="add-book" element={<AddBookPage />} />
-                <Route path="notifications" element={<NotificationPage />} />
-                <Route path="insights" element={<InsightsPage />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <BottomNavigation />
-          </div>
-        </BrowserRouter>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="min-h-screen bg-gray-950">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/book/:id" element={<BookDetailPage />} />
+                <Route path="/player/:id" element={<PlayerPage />} />
+                <Route path="/library" element={<LibraryPage />} />
+                <Route path="/search" element={<SearchPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<UserDataPage />} />
+                  <Route path="add-book" element={<AddBookPage />} />
+                  <Route path="notifications" element={<NotificationPage />} />
+                  <Route path="insights" element={<InsightsPage />} />
+                </Route>
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <BottomNavigation />
+            </div>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -1,30 +1,147 @@
 
-import { useState } from 'react';
-import { User, Edit3, Clock, Crown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Edit3, Clock, Crown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+
+interface UserProfile {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  created_at: string;
+}
 
 const ProfilePage = () => {
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: 'Alex Johnson',
-    email: 'alex.johnson@email.com',
-    bio: 'Book lover and podcast enthusiast. Always looking for the next great story to dive into.',
-    totalListeningTime: 247, // in minutes
-    booksCompleted: 12,
-    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    phone: ''
   });
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // In real app, save to database
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+  }, [user, navigate]);
+
+  // Fetch user profile
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load profile data.",
+          variant: "destructive"
+        });
+      } else {
+        setProfile(data);
+        setFormData({
+          full_name: data.full_name || '',
+          phone: data.phone || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const formatTime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+  const handleSave = async () => {
+    if (!user || !profile) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name,
+          phone: formData.phone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update profile.",
+          variant: "destructive"
+        });
+      } else {
+        setProfile({
+          ...profile,
+          full_name: formData.full_name,
+          phone: formData.phone
+        });
+        setIsEditing(false);
+        toast({
+          title: "Success",
+          description: "Profile updated successfully.",
+        });
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    }
   };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/');
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user || !profile) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 pt-12 pb-20">
@@ -32,11 +149,9 @@ const ProfilePage = () => {
         {/* Profile Header */}
         <div className="text-center mb-8">
           <div className="relative inline-block mb-4">
-            <img
-              src={profile.profileImage}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border-4 border-purple-500"
-            />
+            <div className="w-24 h-24 rounded-full bg-purple-600 flex items-center justify-center border-4 border-purple-500">
+              <User size={40} className="text-white" />
+            </div>
             <button className="absolute bottom-0 right-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors">
               <Edit3 size={14} className="text-white" />
             </button>
@@ -45,15 +160,16 @@ const ProfilePage = () => {
           {isEditing ? (
             <div className="space-y-3">
               <Input
-                value={profile.name}
-                onChange={(e) => setProfile({...profile, name: e.target.value})}
+                value={formData.full_name}
+                onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                 className="text-center bg-gray-900 border-gray-800 text-white"
+                placeholder="Full Name"
               />
-              <textarea
-                value={profile.bio}
-                onChange={(e) => setProfile({...profile, bio: e.target.value})}
-                className="w-full p-3 bg-gray-900 border border-gray-800 rounded-lg text-white text-center resize-none"
-                rows={3}
+              <Input
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                className="text-center bg-gray-900 border-gray-800 text-white"
+                placeholder="Phone Number"
               />
               <div className="flex gap-2 justify-center">
                 <Button onClick={handleSave} className="bg-purple-600 hover:bg-purple-700">
@@ -67,7 +183,9 @@ const ProfilePage = () => {
           ) : (
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
-                <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
+                <h1 className="text-2xl font-bold text-white">
+                  {profile.full_name || 'Anonymous User'}
+                </h1>
                 <button
                   onClick={() => setIsEditing(true)}
                   className="p-1 hover:bg-gray-800 rounded transition-colors"
@@ -75,8 +193,10 @@ const ProfilePage = () => {
                   <Edit3 size={16} className="text-gray-400" />
                 </button>
               </div>
-              <p className="text-gray-400 mb-2">{profile.email}</p>
-              <p className="text-gray-300 text-sm leading-relaxed">{profile.bio}</p>
+              <p className="text-gray-400 mb-2">{user.email}</p>
+              {profile.phone && (
+                <p className="text-gray-300 text-sm">{profile.phone}</p>
+              )}
             </div>
           )}
         </div>
@@ -85,42 +205,34 @@ const ProfilePage = () => {
         <div className="bg-gray-900/50 rounded-xl p-6 mb-6">
           <h2 className="text-xl font-bold text-white mb-4">Your Stats</h2>
           
-          {/* Progress Bar */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-400">Total Listening Time</span>
-              <span className="text-purple-400 font-semibold">{formatTime(profile.totalListeningTime)}</span>
-            </div>
-            <div className="w-full bg-gray-800 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((profile.totalListeningTime / 500) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              {500 - profile.totalListeningTime > 0 
-                ? `${formatTime(500 - profile.totalListeningTime)} to next milestone`
-                : 'Milestone achieved! 🎉'
-              }
-            </p>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-gray-800/50 rounded-lg">
               <Clock size={24} className="text-purple-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-white">{profile.booksCompleted}</p>
-              <p className="text-gray-400 text-sm">Books Completed</p>
+              <p className="text-2xl font-bold text-white">0</p>
+              <p className="text-gray-400 text-sm">Hours Listened</p>
             </div>
             <div className="text-center p-4 bg-gray-800/50 rounded-lg">
               <User size={24} className="text-purple-400 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-white">3</p>
+              <p className="text-2xl font-bold text-white">0</p>
               <p className="text-gray-400 text-sm">Favorites</p>
             </div>
           </div>
         </div>
 
+        {/* Account Actions */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+          >
+            <LogOut size={20} className="mr-2" />
+            Sign Out
+          </Button>
+        </div>
+
         {/* Subscription */}
-        <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 text-white mt-6">
           <div className="flex items-center gap-3 mb-3">
             <Crown size={24} className="text-yellow-300" />
             <h2 className="text-xl font-bold">Premium Plan</h2>
