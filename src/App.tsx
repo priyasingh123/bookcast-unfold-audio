@@ -18,11 +18,16 @@ import GenrePage from "./pages/GenrePage";
 import ProfilePage from "./pages/ProfilePage";
 import AuthPage from "./pages/AuthPage";
 import AdminLayout from "./pages/admin/AdminLayout";
+import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ManageBooks from "./pages/admin/ManageBooks";
+import BulkUpload from "./pages/admin/BulkUpload";
+import InviteAdmins from "./pages/admin/InviteAdmins";
 import UserDataPage from "./pages/admin/UserDataPage";
 import AddBookPage from "./pages/admin/AddBookPage";
 import NotificationPage from "./pages/admin/NotificationPage";
 import InsightsPage from "./pages/admin/InsightsPage";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,9 +60,17 @@ const App = () => {
                 <Route path="/auth" element={<AuthPage />} />
                 
                 {/* Admin Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={
+                  <AdminProtectedRoute>
+                    <AdminLayout />
+                  </AdminProtectedRoute>
+                }>
                   <Route index element={<AdminDashboard />} />
+                  <Route path="manage-books" element={<ManageBooks />} />
+                  <Route path="bulk-upload" element={<BulkUpload />} />
                   <Route path="users" element={<UserDataPage />} />
+                  <Route path="invite-admins" element={<InviteAdmins />} />
                   <Route path="add-book" element={<AddBookPage />} />
                   <Route path="notifications" element={<NotificationPage />} />
                   <Route path="insights" element={<InsightsPage />} />

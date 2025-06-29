@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       authors: {
         Row: {
           avatar_url: string | null
@@ -38,6 +71,7 @@ export type Database = {
       }
       books: {
         Row: {
+          audio_path: string | null
           author: string
           author_id: string | null
           cover_url: string | null
@@ -48,10 +82,12 @@ export type Database = {
           id: string
           is_trending: boolean | null
           popularity_score: number | null
+          status: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          audio_path?: string | null
           author: string
           author_id?: string | null
           cover_url?: string | null
@@ -62,10 +98,12 @@ export type Database = {
           id?: string
           is_trending?: boolean | null
           popularity_score?: number | null
+          status?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          audio_path?: string | null
           author?: string
           author_id?: string | null
           cover_url?: string | null
@@ -76,6 +114,7 @@ export type Database = {
           id?: string
           is_trending?: boolean | null
           popularity_score?: number | null
+          status?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -145,7 +184,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_admin_access: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

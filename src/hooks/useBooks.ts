@@ -5,13 +5,16 @@ export interface Book {
   id: string;
   title: string;
   author: string;
-  author_id: string | null;
-  cover: string | null; // Changed from cover_url to cover
-  duration: string | null;
+  cover: string;
   genre: string;
-  description: string | null;
-  is_trending: boolean | null;
-  popularity_score: number | null;
+  description?: string;
+  duration?: string;
+  is_trending?: boolean;
+  popularity_score?: number;
+  status?: string;
+  audio_path?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Author {
@@ -29,36 +32,23 @@ export interface Genre {
   icon: string | null;
 }
 
-export const useBooks = (genre?: string, authorId?: string) => {
+export const useBooks = () => {
   return useQuery({
-    queryKey: ['books', genre, authorId],
+    queryKey: ['books'],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from('books')
         .select('*')
-        .order('popularity_score', { ascending: false });
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
       
-      if (genre && genre !== 'all') {
-        query = query.eq('genre', genre.toLowerCase());
-      }
+      if (error) throw error;
       
-      if (authorId) {
-        query = query.eq('author_id', authorId);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching books:', error);
-        throw error;
-      }
-      
-      // Map cover_url to cover to match BookCard expectations
-      return data?.map(book => ({
+      return (data || []).map(book => ({
         ...book,
-        cover: book.cover_url
-      })) as Book[];
-    }
+        cover: book.cover_url,
+      }));
+    },
   });
 };
 
@@ -70,19 +60,58 @@ export const useTrendingBooks = () => {
         .from('books')
         .select('*')
         .eq('is_trending', true)
+        .eq('status', 'active')
         .order('popularity_score', { ascending: false });
       
-      if (error) {
-        console.error('Error fetching trending books:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      // Map cover_url to cover to match BookCard expectations
-      return data?.map(book => ({
+      return (data || []).map(book => ({
         ...book,
-        cover: book.cover_url
-      })) as Book[];
-    }
+        cover: book.cover_url,
+      }));
+    },
+  });
+};
+
+export const useBooksByGenre = (genre: string) => {
+  return useQuery({
+    queryKey: ['books-by-genre', genre],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .eq('genre', genre)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      return (data || []).map(book => ({
+        ...book,
+        cover: book.cover_url,
+      }));
+    },
+  });
+};
+
+export const useBooksByAuthor = (author: string) => {
+  return useQuery({
+    queryKey: ['books-by-author', author],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .eq('author', author)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      return (data || []).map(book => ({
+        ...book,
+        cover: book.cover_url,
+      }));
+    },
   });
 };
 
