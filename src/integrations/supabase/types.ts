@@ -72,6 +72,35 @@ export type Database = {
         }
         Relationships: []
       }
+      book_likes: {
+        Row: {
+          book_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_likes_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       books: {
         Row: {
           audio_path: string | null
@@ -130,6 +159,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      deleted_books: {
+        Row: {
+          audio_path: string | null
+          author: string
+          cover_url: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          duration: string | null
+          genre: string
+          id: string
+          original_book_id: string
+          title: string
+        }
+        Insert: {
+          audio_path?: string | null
+          author: string
+          cover_url?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          description?: string | null
+          duration?: string | null
+          genre: string
+          id?: string
+          original_book_id: string
+          title: string
+        }
+        Update: {
+          audio_path?: string | null
+          author?: string
+          cover_url?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          description?: string | null
+          duration?: string | null
+          genre?: string
+          id?: string
+          original_book_id?: string
+          title?: string
+        }
+        Relationships: []
       }
       genres: {
         Row: {
@@ -209,11 +280,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stats: {
+        Row: {
+          books_completed: number | null
+          created_at: string | null
+          id: string
+          last_active_date: string | null
+          total_listening_time: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          books_completed?: number | null
+          created_at?: string | null
+          id?: string
+          last_active_date?: string | null
+          total_listening_time?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          books_completed?: number | null
+          created_at?: string | null
+          id?: string
+          last_active_date?: string | null
+          total_listening_time?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_admin_dashboard_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       has_admin_access: {
         Args: { user_id: string }
         Returns: boolean
@@ -221,6 +326,10 @@ export type Database = {
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      update_user_listening_time: {
+        Args: { p_user_id: string; p_minutes: number }
+        Returns: undefined
       }
     }
     Enums: {

@@ -38,11 +38,11 @@ const BulkUpload = () => {
     const lines = csvText.split('\n').filter(line => line.trim());
     if (lines.length < 2) return [];
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
     const books: BookData[] = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
+      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
       const book: any = {};
 
       headers.forEach((header, index) => {
@@ -125,6 +125,7 @@ const BulkUpload = () => {
     onSuccess: (results) => {
       setUploadResults(results);
       queryClient.invalidateQueries({ queryKey: ['admin-books'] });
+      queryClient.invalidateQueries({ queryKey: ['books'] });
       
       if (results.success > 0) {
         toast({
@@ -139,6 +140,15 @@ const BulkUpload = () => {
           description: `${results.errors.length} books failed to upload.`,
           variant: 'destructive',
         });
+      }
+      
+      // Clear the form
+      setCsvData([]);
+      setPreviewMode(false);
+      // Reset the file input
+      const fileInput = document.getElementById('csv-upload') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
       }
     },
     onError: () => {
@@ -157,7 +167,7 @@ const BulkUpload = () => {
 
   const downloadTemplate = () => {
     const csvContent = 'title,author,genre,description,cover_url,audio_path,duration\n' +
-      'Sample Book,Sample Author,Fiction,A great book,https://example.com/cover.jpg,audio/sample.mp3,5h 30m';
+      '"The Great Gatsby","F. Scott Fitzgerald","Fiction","A classic American novel","https://example.com/cover.jpg","audio/gatsby.mp3","8h 30m"';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -261,6 +271,7 @@ const BulkUpload = () => {
                 onClick={() => {
                   setCsvData([]);
                   setPreviewMode(false);
+                  setUploadResults({ success: 0, errors: [] });
                 }}
               >
                 Cancel
