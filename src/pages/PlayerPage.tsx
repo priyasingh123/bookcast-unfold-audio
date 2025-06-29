@@ -46,36 +46,7 @@ const PlayerPage = () => {
     };
 
     fetchAudio();
-
-    // const fetchSignedUrl = async () => {
-    //   try {
-    //     const {
-    //       data: { signedUrl },
-    //     } = await supabase.storage
-    //       .from("podcasts")
-    //       .createSignedUrl(
-    //         "https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80NDY1YTNiMy05OTA1LTQ5OGYtOTJkNS1hNTdiMmQ2MzM5NzQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwb2RjYXN0cy9hbGNoZW1pc3QubXAzIiwiaWF0IjoxNzUxMTI2MzAzLCJleHAiOjE3NTE3MzExMDN9.rC5DD5fiscBjl4AQ-7r2tDfwLJs6UWy8Suox1qJ5cD8",
-    //         604800
-    //       );
-
-    //     // Do something with signedUrl
-    //     console.log(signedUrl);
-    //   } catch (error) {
-    //     console.error("Error fetching signed URL:", error);
-    //   }
-    // };
-
-    // fetchSignedUrl();
   }, []);
-  // useEffect(() => {
-  //   let interval: NodeJS.Timeout;
-  //   if (isPlaying) {
-  //     interval = setInterval(() => {
-  //       setCurrentTime((prev) => Math.min(prev + 1, mockBook.duration));
-  //     }, 1000);
-  //   }
-  //   return () => clearInterval(interval);
-  // }, [isPlaying]);
 
   const togglePlay = () => {
     if (audioRef.current) {
