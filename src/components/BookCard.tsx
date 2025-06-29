@@ -1,16 +1,7 @@
 
 import { Play, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  cover: string;
-  duration: string;
-  genre: string;
-  description: string;
-}
+import { Book } from '@/hooks/useBooks';
 
 interface BookCardProps {
   book: Book;
@@ -57,9 +48,11 @@ const BookCard = ({ book, size = 'medium' }: BookCardProps) => {
         </div>
         
         {/* Duration badge */}
-        <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-          {book.duration}
-        </div>
+        {book.duration && (
+          <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+            {book.duration}
+          </div>
+        )}
       </div>
       
       <div>
