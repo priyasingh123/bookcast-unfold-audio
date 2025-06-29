@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -24,18 +25,56 @@ const AdminLogin = () => {
 
   const from = location.state?.from?.pathname || '/admin';
 
+  // Check admin access for current user
+  const { data: hasAdminAccess, isLoading: checkingAdmin } = useQuery({
+    queryKey: ['adminAccess', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      
+      console.log('Checking admin access for user:', user.email);
+      
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'accepted')
+        .single();
+
+      console.log('Admin access check result:', { data, error });
+      
+      if (error) {
+        console.error('Admin access check error:', error);
+        return false;
+      }
+      
+      return !!data;
+    },
+    enabled: !!user,
+  });
+
+  // Handle redirect for authenticated admin users
+  useEffect(() => {
+    if (user && hasAdminAccess && !checkingAdmin) {
+      console.log('User has admin access, redirecting to:', from);
+      navigate(from, { replace: true });
+    }
+  }, [user, hasAdminAccess, checkingAdmin, navigate, from]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      console.log('Attempting login for:', email);
+      
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
+        console.error('Sign in error:', signInError);
         setError(signInError.message);
         return;
       }
@@ -48,7 +87,10 @@ const AdminLogin = () => {
         .eq('status', 'accepted')
         .single();
 
+      console.log('Admin data check:', { adminData, adminError });
+
       if (adminError || !adminData) {
+        console.error('Admin access denied:', adminError);
         setError('You do not have admin access to this system.');
         await supabase.auth.signOut();
         return;
@@ -61,16 +103,29 @@ const AdminLogin = () => {
 
       navigate(from, { replace: true });
     } catch (err) {
+      console.error('Login error:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Redirect if already logged in with admin access
-  if (user) {
-    navigate('/admin', { replace: true });
-    return null;
+  // Show loading while checking admin access
+  if (checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-600">Checking admin access...</div>
+      </div>
+    );
+  }
+
+  // Don't render login form if user is already authenticated and has admin access
+  if (user && hasAdminAccess) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-600">Redirecting to admin panel...</div>
+      </div>
+    );
   }
 
   return (

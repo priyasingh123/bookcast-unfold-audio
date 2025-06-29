@@ -12,10 +12,12 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  const { data: hasAdminAccess, isLoading: checkingAdmin } = useQuery({
+  const { data: hasAdminAccess, isLoading: checkingAdmin, error } = useQuery({
     queryKey: ['adminAccess', user?.id],
     queryFn: async () => {
       if (!user) return false;
+      
+      console.log('AdminProtectedRoute: Checking admin access for user:', user.email);
       
       const { data, error } = await supabase
         .from('admin_users')
@@ -24,9 +26,17 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
         .eq('status', 'accepted')
         .single();
 
-      return !error && !!data;
+      console.log('AdminProtectedRoute: Admin access result:', { data, error });
+
+      if (error) {
+        console.error('AdminProtectedRoute: Error checking admin access:', error);
+        return false;
+      }
+
+      return !!data;
     },
     enabled: !!user,
+    retry: 1, // Only retry once to avoid infinite loops
   });
 
   if (loading || checkingAdmin) {
@@ -37,7 +47,8 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
     );
   }
 
-  if (!user || !hasAdminAccess) {
+  if (!user || hasAdminAccess === false) {
+    console.log('AdminProtectedRoute: Redirecting to login. User:', !!user, 'Admin access:', hasAdminAccess);
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
