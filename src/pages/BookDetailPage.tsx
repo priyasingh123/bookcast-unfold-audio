@@ -27,10 +27,6 @@ const BookDetailPage = () => {
   const [isLiked, setIsLiked] = useState(mockBook.isLiked);
 
   const handleStartListening = () => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
     navigate(`/player/${id}`);
   };
 
@@ -81,8 +77,8 @@ const BookDetailPage = () => {
               <span>{mockBook.releaseDate}</span>
             </div>
             {!user && (
-              <div className="mt-2 text-yellow-400 text-sm flex items-center">
-                <span>🔒 Login required for secure streaming</span>
+              <div className="mt-2 text-green-400 text-sm flex items-center">
+                <span>🎵 Free to listen • Sign in to save progress</span>
               </div>
             )}
           </div>
@@ -94,7 +90,7 @@ const BookDetailPage = () => {
               className="flex-1 bg-white text-black font-semibold py-4 px-6 rounded-full flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
             >
               <Play size={20} />
-              {user ? 'Start Listening' : 'Login to Listen'}
+              Start Listening
             </button>
             <button
               onClick={handleSaveToLibrary}
@@ -112,14 +108,14 @@ const BookDetailPage = () => {
 
       {/* Content Section */}
       <div className="px-4 py-6 space-y-6">
-        {/* Security Notice */}
-        <div className="bg-gray-800/50 rounded-xl p-4 border-l-4 border-purple-500">
+        {/* Public Access Notice */}
+        <div className="bg-green-800/20 rounded-xl p-4 border-l-4 border-green-500">
           <h3 className="text-white font-semibold mb-2 flex items-center">
-            🔒 Secure Streaming
+            🎵 Free Public Access
           </h3>
           <p className="text-gray-300 text-sm">
-            This content is protected with end-to-end encryption and secure access tokens. 
-            Your listening progress is automatically saved and synced across devices.
+            This audiobook is freely available to everyone. 
+            {user ? ' Your listening progress is automatically saved.' : ' Sign in to save your progress and create playlists.'}
           </p>
         </div>
 
@@ -140,8 +136,8 @@ const BookDetailPage = () => {
               <span className="text-white">{mockBook.duration}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Security:</span>
-              <span className="text-green-400">✓ Protected</span>
+              <span className="text-gray-400">Access:</span>
+              <span className="text-green-400">✓ Public</span>
             </div>
           </div>
         </div>
@@ -157,8 +153,12 @@ const BookDetailPage = () => {
         {/* Features */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-gray-900/50 rounded-lg p-3">
-            <div className="text-purple-400 text-sm font-semibold">Resume Playback</div>
-            <div className="text-gray-400 text-xs">Pick up where you left off</div>
+            <div className="text-purple-400 text-sm font-semibold">
+              {user ? 'Resume Playback' : 'Free Access'}
+            </div>
+            <div className="text-gray-400 text-xs">
+              {user ? 'Pick up where you left off' : 'No login required'}
+            </div>
           </div>
           <div className="bg-gray-900/50 rounded-lg p-3">
             <div className="text-purple-400 text-sm font-semibold">Variable Speed</div>

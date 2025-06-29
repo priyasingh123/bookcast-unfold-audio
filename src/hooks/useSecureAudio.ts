@@ -23,23 +23,13 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
   const [progress, setProgress] = useState<ListeningProgress | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Generate signed URL for secure access
-  const generateSignedUrl = async (path: string): Promise<string> => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('book-audios')
-        .createSignedUrl(path, 3600); // 1 hour expiry
-
-      if (error) {
-        console.error('Error generating signed URL:', error);
-        throw error;
-      }
-
-      return data.signedUrl;
-    } catch (error) {
-      console.error('Failed to generate signed URL:', error);
-      throw error;
-    }
+  // Generate public URL for the audio file
+  const generatePublicUrl = (path: string): string => {
+    const { data } = supabase.storage
+      .from('book-audios')
+      .getPublicUrl(path);
+    
+    return data.publicUrl;
   };
 
   // Load user's listening progress
@@ -91,15 +81,19 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
     }
   };
 
-  // Initialize secure audio
+  // Initialize audio with public URL
   const initializeAudio = async () => {
-    if (!audioPath || !user) return;
+    if (!audioPath) return;
 
     setIsLoading(true);
     try {
-      const signedUrl = await generateSignedUrl(audioPath);
-      setAudioUrl(signedUrl);
-      await loadProgress();
+      const publicUrl = generatePublicUrl(audioPath);
+      setAudioUrl(publicUrl);
+      
+      // Load progress only if user is authenticated
+      if (user) {
+        await loadProgress();
+      }
     } catch (error) {
       console.error('Failed to initialize audio:', error);
     } finally {
@@ -113,8 +107,8 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
       const newTime = audioRef.current.currentTime;
       setCurrentTime(newTime);
       
-      // Save progress every 10 seconds
-      if (Math.floor(newTime) % 10 === 0) {
+      // Save progress every 10 seconds (only for authenticated users)
+      if (user && Math.floor(newTime) % 10 === 0) {
         saveProgress(newTime);
       }
     }
@@ -126,8 +120,8 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
       const audioDuration = audioRef.current.duration;
       setDuration(audioDuration);
       
-      // Resume from saved position
-      if (progress && progress.current_position > 0) {
+      // Resume from saved position (only for authenticated users)
+      if (user && progress && progress.current_position > 0) {
         audioRef.current.currentTime = progress.current_position;
         setCurrentTime(progress.current_position);
       }
@@ -137,7 +131,9 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
   // Handle audio ended
   const handleEnded = () => {
     setIsPlaying(false);
-    saveProgress(0); // Reset progress when finished
+    if (user) {
+      saveProgress(0); // Reset progress when finished
+    }
   };
 
   // Play/pause toggle
@@ -148,7 +144,9 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
-        saveProgress(currentTime);
+        if (user) {
+          saveProgress(currentTime);
+        }
       } else {
         await audioRef.current.play();
         setIsPlaying(true);
@@ -163,7 +161,9 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
     if (audioRef.current) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
-      saveProgress(time);
+      if (user) {
+        saveProgress(time);
+      }
     }
   };
 
@@ -176,19 +176,19 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
   };
 
   useEffect(() => {
-    if (user && audioPath) {
+    if (audioPath) {
       initializeAudio();
     }
   }, [user, audioPath, bookId]);
 
-  // Auto-save progress on unmount
+  // Auto-save progress on unmount (only for authenticated users)
   useEffect(() => {
     return () => {
-      if (currentTime > 0) {
+      if (user && currentTime > 0) {
         saveProgress(currentTime);
       }
     };
-  }, [currentTime]);
+  }, [currentTime, user]);
 
   return {
     audioRef,

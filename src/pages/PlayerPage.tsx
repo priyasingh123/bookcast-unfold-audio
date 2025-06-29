@@ -22,14 +22,6 @@ const PlayerPage = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Redirect to auth if user is not logged in
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-  }, [user, navigate]);
-
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -44,22 +36,6 @@ const PlayerPage = () => {
     setIsPlaying(playing);
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-white text-center">
-          <p className="mb-4">Please log in to listen to podcasts</p>
-          <button 
-            onClick={() => navigate('/auth')}
-            className="bg-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-700 transition-colors"
-          >
-            Log In
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
       {/* Header */}
@@ -71,8 +47,10 @@ const PlayerPage = () => {
           <ChevronDown size={24} className="text-white" />
         </button>
         <div className="text-center">
-          <p className="text-gray-400 text-sm">SECURE STREAMING</p>
-          <p className="text-gray-500 text-xs">Protected Content</p>
+          <p className="text-gray-400 text-sm">PUBLIC STREAMING</p>
+          <p className="text-gray-500 text-xs">
+            {user ? 'Progress Saved' : 'Sign in to save progress'}
+          </p>
         </div>
         <button 
           className="p-2 hover:bg-gray-800 rounded-full transition-colors"
@@ -106,7 +84,7 @@ const PlayerPage = () => {
           </p>
         </div>
 
-        {/* Secure Audio Player */}
+        {/* Public Audio Player */}
         <SecureAudioPlayer
           bookId={id || '1'}
           audioPath={mockBook.audioPath}
@@ -123,7 +101,13 @@ const PlayerPage = () => {
           </button>
 
           <button
-            onClick={() => setIsLiked(!isLiked)}
+            onClick={() => {
+              if (!user) {
+                navigate('/auth');
+                return;
+              }
+              setIsLiked(!isLiked);
+            }}
             className="p-2 hover:bg-gray-800 rounded-full transition-colors"
           >
             <Heart
@@ -136,6 +120,21 @@ const PlayerPage = () => {
             />
           </button>
         </div>
+
+        {/* Sign in prompt for additional features */}
+        {!user && (
+          <div className="mt-6 text-center">
+            <p className="text-gray-400 text-sm mb-2">
+              Want to save your progress and create playlists?
+            </p>
+            <button
+              onClick={() => navigate('/auth')}
+              className="text-purple-400 hover:text-purple-300 text-sm font-semibold"
+            >
+              Sign In
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

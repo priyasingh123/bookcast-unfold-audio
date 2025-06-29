@@ -2,6 +2,7 @@
 import React from 'react';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
 import { useSecureAudio } from '@/hooks/useSecureAudio';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SecureAudioPlayerProps {
   bookId: string;
@@ -14,6 +15,7 @@ const SecureAudioPlayer: React.FC<SecureAudioPlayerProps> = ({
   audioPath,
   onPlayStateChange
 }) => {
+  const { user } = useAuth();
   const {
     audioRef,
     audioUrl,
@@ -49,7 +51,7 @@ const SecureAudioPlayer: React.FC<SecureAudioPlayerProps> = ({
     return (
       <div className="flex items-center justify-center p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-        <span className="ml-2 text-white">Loading secure audio...</span>
+        <span className="ml-2 text-white">Loading audio...</span>
       </div>
     );
   }
@@ -93,11 +95,18 @@ const SecureAudioPlayer: React.FC<SecureAudioPlayerProps> = ({
           <span>{formatTime(duration)}</span>
         </div>
         
-        {/* Resume indicator */}
-        {progress && progress.current_position > 0 && (
+        {/* Resume indicator - only show for authenticated users */}
+        {user && progress && progress.current_position > 0 && (
           <div className="flex items-center text-purple-400 text-xs mt-1">
             <RotateCcw size={12} className="mr-1" />
             <span>Resume from {formatTime(progress.current_position)}</span>
+          </div>
+        )}
+
+        {/* Guest notice */}
+        {!user && (
+          <div className="flex items-center text-yellow-400 text-xs mt-1">
+            <span>👤 Sign in to save your listening progress</span>
           </div>
         )}
       </div>
