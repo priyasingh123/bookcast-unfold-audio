@@ -2,145 +2,29 @@
 import { useState, useMemo } from 'react';
 import { Search, TrendingUp } from 'lucide-react';
 import BookCard from '../components/BookCard';
+import AuthorCard from '../components/AuthorCard';
+import GenreCard from '../components/GenreCard';
 import { Input } from '@/components/ui/input';
+import { useSearchBooks, useAuthors, useGenres } from '@/hooks/useBooks';
 
 const topSearches = [
-  'The Seven Husbands of Evelyn Hugo',
-  'Where the Crawdads Sing',
-  'It Ends with Us',
-  'The Psychology of Money',
-  'Atomic Habits'
-];
-
-const allBooks = [
-  {
-    id: '1',
-    title: 'The Seven Husbands of Evelyn Hugo',
-    author: 'Taylor Jenkins Reid',
-    cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400&fit=crop',
-    duration: '45m',
-    genre: 'romance',
-    description: 'A captivating conversation with the legendary Evelyn Hugo herself.'
-  },
-  {
-    id: '2',
-    title: 'Atomic Habits',
-    author: 'James Clear',
-    cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop',
-    duration: '52m',
-    genre: 'biography',
-    description: 'Join James Clear as he breaks down the science of habit formation.'
-  },
-  {
-    id: '3',
-    title: 'The Silent Patient',
-    author: 'Alex Michaelides',
-    cover: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=300&h=400&fit=crop',
-    duration: '38m',
-    genre: 'thriller',
-    description: 'A thrilling discussion with psychotherapist Theo Faber.'
-  },
-  {
-    id: '4',
-    title: 'Dune',
-    author: 'Frank Herbert',
-    cover: 'https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=300&h=400&fit=crop',
-    duration: '61m',
-    genre: 'scifi',
-    description: 'Paul Atreides shares his journey across the desert planet Arrakis.'
-  },
-  {
-    id: '5',
-    title: 'The Thursday Murder Club',
-    author: 'Richard Osman',
-    cover: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-    duration: '43m',
-    genre: 'mystery',
-    description: 'Elizabeth and the gang solve mysteries over tea and biscuits.'
-  },
-  {
-    id: '10',
-    title: '1984',
-    author: 'George Orwell',
-    cover: 'https://images.unsplash.com/photo-1495640388908-05fa85288e61?w=300&h=400&fit=crop',
-    duration: '52m',
-    genre: 'fiction',
-    description: 'Winston Smith navigates life under Big Brother\'s watchful eye.'
-  },
-  {
-    id: '11',
-    title: 'To Kill a Mockingbird',
-    author: 'Harper Lee',
-    cover: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-    duration: '48m',
-    genre: 'fiction',
-    description: 'Scout Finch shares her childhood experiences in Depression-era Alabama.'
-  },
-  {
-    id: '12',
-    title: 'The Great Gatsby',
-    author: 'F. Scott Fitzgerald',
-    cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop',
-    duration: '43m',
-    genre: 'fiction',
-    description: 'Jay Gatsby tells his story of love and the American Dream.'
-  },
-  {
-    id: '13',
-    title: 'Pride and Prejudice',
-    author: 'Jane Austen',
-    cover: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=400&fit=crop',
-    duration: '56m',
-    genre: 'romance',
-    description: 'Elizabeth Bennet discusses love, marriage, and social expectations.'
-  },
-  {
-    id: '14',
-    title: 'Where the Crawdads Sing',
-    author: 'Delia Owens',
-    cover: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=400&fit=crop',
-    duration: '41m',
-    genre: 'fiction',
-    description: 'Kya Clark tells her story of survival in the North Carolina marshlands.'
-  },
-  {
-    id: '15',
-    title: 'It Ends with Us',
-    author: 'Colleen Hoover',
-    cover: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=400&fit=crop',
-    duration: '39m',
-    genre: 'romance',
-    description: 'Lily Bloom shares her powerful story of love and resilience.'
-  },
-  {
-    id: '16',
-    title: 'The Psychology of Money',
-    author: 'Morgan Housel',
-    cover: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-    duration: '47m',
-    genre: 'biography',
-    description: 'Morgan Housel discusses the psychology behind financial decisions.'
-  }
+  'Atomic Habits',
+  'Dune',
+  'Romance'
 ];
 
 const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredBooks = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    
-    const query = searchQuery.toLowerCase().trim();
-    return allBooks.filter(book => 
-      book.title.toLowerCase().includes(query) ||
-      book.author.toLowerCase().includes(query) ||
-      book.genre.toLowerCase().includes(query) ||
-      book.description.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
+  const { data: searchResults = [], isLoading: isSearching } = useSearchBooks(searchQuery);
+  const { data: authors = [], isLoading: isLoadingAuthors } = useAuthors();
+  const { data: genres = [], isLoading: isLoadingGenres } = useGenres();
 
   const handleTopSearchClick = (search: string) => {
     setSearchQuery(search);
   };
+
+  const topAuthors = authors.slice(0, 6);
+  const topGenres = genres.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-gray-950 pt-12 pb-20">
@@ -154,38 +38,66 @@ const SearchPage = () => {
             placeholder="Search for books, authors, or genres..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-400 focus:border-purple-500"
+            className="pl-10 h-12 bg-gray-900 border-gray-800 text-white placeholder:text-gray-400 focus:border-purple-500 rounded-xl shadow-lg"
           />
         </div>
       </div>
 
       {!searchQuery && (
         <>
+          {/* Top Searches Section */}
           <div className="px-4 mb-8">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={20} className="text-purple-400" />
               <h2 className="text-xl font-bold text-white">Top Searches</h2>
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
               {topSearches.map((search, index) => (
                 <button
                   key={index}
                   onClick={() => handleTopSearchClick(search)}
-                  className="block w-full text-left py-3 px-4 bg-gray-900/50 rounded-lg hover:bg-gray-900/70 transition-colors"
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-full transition-colors duration-200 hover:scale-105 transform"
                 >
-                  <span className="text-white">{search}</span>
+                  {search}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Top Author Searches Section */}
+          <div className="px-4 mb-8">
+            <h2 className="text-xl font-bold text-white mb-4">Top Author Searches</h2>
+            {isLoadingAuthors ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-24 bg-gray-800 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {topAuthors.map((author) => (
+                  <AuthorCard key={author.id} author={author} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Top Genre Searches Section */}
           <div className="px-4">
-            <h2 className="text-xl font-bold text-white mb-4">Famous Books</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {allBooks.slice(5, 9).map((book) => (
-                <BookCard key={book.id} book={book} size="medium" />
-              ))}
-            </div>
+            <h2 className="text-xl font-bold text-white mb-4">Top Genre Searches</h2>
+            {isLoadingGenres ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-800 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {topGenres.map((genre) => (
+                  <GenreCard key={genre.id} genre={genre} />
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -193,15 +105,22 @@ const SearchPage = () => {
       {searchQuery && (
         <div className="px-4">
           <p className="text-gray-400 mb-4">
-            {filteredBooks.length > 0 
-              ? `${filteredBooks.length} result${filteredBooks.length !== 1 ? 's' : ''} for "${searchQuery}"`
-              : `No results found for "${searchQuery}"`
+            {isSearching ? 'Searching...' : 
+              searchResults.length > 0 
+                ? `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${searchQuery}"`
+                : `No results found for "${searchQuery}"`
             }
           </p>
           
-          {filteredBooks.length > 0 ? (
+          {isSearching ? (
             <div className="grid grid-cols-2 gap-4">
-              {filteredBooks.map((book) => (
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="aspect-[3/4] bg-gray-800 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : searchResults.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {searchResults.map((book) => (
                 <BookCard key={book.id} book={book} size="medium" />
               ))}
             </div>

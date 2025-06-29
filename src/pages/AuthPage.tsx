@@ -4,11 +4,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, User, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const AuthPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -18,17 +23,67 @@ const AuthPage = () => {
 
   const from = location.state?.from?.pathname || '/';
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In real app, handle authentication
-    console.log('Auth attempt:', formData);
-    navigate(from, { replace: true });
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) {
+          toast({
+            title: "Error signing in",
+            description: error.message,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully signed in.",
+          });
+          navigate(from, { replace: true });
+        }
+      } else {
+        const { error } = await signUp(formData.email, formData.password, formData.name, formData.phone);
+        if (error) {
+          toast({
+            title: "Error creating account",
+            description: error.message,
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Account created!",
+            description: "Please check your email to verify your account.",
+          });
+          setIsLogin(true);
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Unexpected error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // In real app, integrate with Google OAuth
-    console.log('Google login');
-    navigate(from, { replace: true });
+  const handleGoogleLogin = async () => {
+    try {
+      // For Google auth, we'll implement this later when you configure it
+      toast({
+        title: "Coming Soon",
+        description: "Google authentication will be available soon.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Google sign in failed. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -90,6 +145,7 @@ const AuthPage = () => {
               className="bg-gray-900 border-gray-800 text-white"
               placeholder="Enter your password"
               required
+              minLength={6}
             />
           </div>
 
@@ -110,9 +166,10 @@ const AuthPage = () => {
 
           <Button
             type="submit"
+            disabled={loading}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3"
           >
-            {isLogin ? 'Sign In' : 'Create Account'}
+            {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
           </Button>
         </form>
 
