@@ -1,17 +1,30 @@
-
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Pause, SkipBack, SkipForward, Share, Heart, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Share,
+  Heart,
+  ChevronDown,
+} from "lucide-react";
 
 const mockBook = {
-  id: '1',
-  title: 'The Seven Husbands of Evelyn Hugo',
-  author: 'Taylor Jenkins Reid',
-  cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop',
-  duration: 2700, // in seconds (45 minutes)
-  host: 'Sarah Chen',
-  guest: 'Evelyn Hugo'
+  id: "1",
+  title: "The Seven Husbands of Evelyn Hugo",
+  author: "Taylor Jenkins Reid",
+  cover:
+    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop",
+  host: "Sarah Chen",
+  guest: "Evelyn Hugo",
 };
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_KEY
+);
 
 const PlayerPage = () => {
   const { id } = useParams();
@@ -19,26 +32,57 @@ const PlayerPage = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioUrl, setAudioUrl] = useState("");
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTime(prev => Math.min(prev + 1, mockBook.duration));
-      }, 1000);
+    const fetchAudio = async () => {
+      const publicUrl = `https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=${
+        import.meta.env.VITE_AUDIO_TOKEN
+      }`;
+
+      setAudioUrl(publicUrl);
+    };
+
+    fetchAudio();
+  }, []);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
     }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${Math.ceil(secs)}`;
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseInt(e.target.value);
     setCurrentTime(newTime);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
+    }
   };
 
   const handleShare = () => {
@@ -98,14 +142,14 @@ const PlayerPage = () => {
           <input
             type="range"
             min="0"
-            max={mockBook.duration}
+            max={duration}
             value={currentTime}
             onChange={handleSeek}
             className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
           />
           <div className="flex justify-between text-gray-400 text-sm mt-2">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(mockBook.duration)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -114,8 +158,23 @@ const PlayerPage = () => {
           <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
             <SkipBack size={28} className="text-white" />
           </button>
-          
-          <button
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={togglePlay}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+            >
+              {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+            </button>
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+            />
+          </div>
+
+          {/* <button
             onClick={() => setIsPlaying(!isPlaying)}
             className="w-16 h-16 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
           >
@@ -125,7 +184,19 @@ const PlayerPage = () => {
               <Play size={32} className="text-black ml-1" />
             )}
           </button>
-          
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+          /> */}
+          {/* {audioUrl && (
+            <audio controls>
+              <source src={audioUrl} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+          )} */}
+
           <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
             <SkipForward size={28} className="text-white" />
           </button>
@@ -136,14 +207,18 @@ const PlayerPage = () => {
           <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
             <Share size={24} className="text-gray-400 hover:text-white" />
           </button>
-          
+
           <button
             onClick={() => setIsLiked(!isLiked)}
             className="p-2 hover:bg-gray-800 rounded-full transition-colors"
           >
-            <Heart 
-              size={24} 
-              className={`${isLiked ? 'text-purple-400 fill-current' : 'text-gray-400 hover:text-white'}`}
+            <Heart
+              size={24}
+              className={`${
+                isLiked
+                  ? "text-purple-400 fill-current"
+                  : "text-gray-400 hover:text-white"
+              }`}
             />
           </button>
         </div>
