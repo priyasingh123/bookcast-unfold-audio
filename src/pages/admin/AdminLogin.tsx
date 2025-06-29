@@ -25,20 +25,20 @@ const AdminLogin = () => {
 
   const from = location.state?.from?.pathname || '/admin';
 
-  // Check admin access for current user
+  // Check admin access for current user - use maybeSingle() instead of single()
   const { data: hasAdminAccess, isLoading: checkingAdmin } = useQuery({
     queryKey: ['adminAccess', user?.id],
     queryFn: async () => {
       if (!user) return false;
       
-      console.log('Checking admin access for user:', user.email);
+      console.log('Checking admin access for user:', user.email, 'ID:', user.id);
       
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'accepted')
-        .single();
+        .maybeSingle(); // Use maybeSingle() to avoid 406 errors
 
       console.log('Admin access check result:', { data, error });
       
@@ -79,18 +79,25 @@ const AdminLogin = () => {
         return;
       }
 
-      // Check if user has admin access
+      // Check if user has admin access - use maybeSingle() here too
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('*')
         .eq('email', email)
         .eq('status', 'accepted')
-        .single();
+        .maybeSingle();
 
       console.log('Admin data check:', { adminData, adminError });
 
-      if (adminError || !adminData) {
-        console.error('Admin access denied:', adminError);
+      if (adminError) {
+        console.error('Admin access check failed:', adminError);
+        setError('Error checking admin access. Please try again.');
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (!adminData) {
+        console.error('Admin access denied - no admin record found');
         setError('You do not have admin access to this system.');
         await supabase.auth.signOut();
         return;

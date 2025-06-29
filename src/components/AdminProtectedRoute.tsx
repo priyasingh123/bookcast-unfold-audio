@@ -17,14 +17,14 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
     queryFn: async () => {
       if (!user) return false;
       
-      console.log('AdminProtectedRoute: Checking admin access for user:', user.email);
+      console.log('AdminProtectedRoute: Checking admin access for user:', user.email, 'ID:', user.id);
       
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'accepted')
-        .single();
+        .maybeSingle(); // Use maybeSingle() to avoid 406 errors
 
       console.log('AdminProtectedRoute: Admin access result:', { data, error });
 
