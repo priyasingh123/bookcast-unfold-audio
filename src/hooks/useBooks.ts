@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,7 +6,7 @@ export interface Book {
   title: string;
   author: string;
   author_id: string | null;
-  cover_url: string | null;
+  cover: string | null; // Changed from cover_url to cover
   duration: string | null;
   genre: string;
   description: string | null;
@@ -54,7 +53,11 @@ export const useBooks = (genre?: string, authorId?: string) => {
         throw error;
       }
       
-      return data as Book[];
+      // Map cover_url to cover to match BookCard expectations
+      return data?.map(book => ({
+        ...book,
+        cover: book.cover_url
+      })) as Book[];
     }
   });
 };
@@ -74,7 +77,11 @@ export const useTrendingBooks = () => {
         throw error;
       }
       
-      return data as Book[];
+      // Map cover_url to cover to match BookCard expectations
+      return data?.map(book => ({
+        ...book,
+        cover: book.cover_url
+      })) as Book[];
     }
   });
 };
@@ -135,7 +142,11 @@ export const useSearchBooks = (searchQuery: string) => {
         throw error;
       }
       
-      return data as Book[];
+      // Map cover_url to cover to match BookCard expectations
+      return data?.map(book => ({
+        ...book,
+        cover: book.cover_url
+      })) as Book[];
     },
     enabled: !!searchQuery.trim()
   });
