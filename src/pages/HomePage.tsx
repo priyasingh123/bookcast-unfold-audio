@@ -1,84 +1,69 @@
 
 import { useState } from 'react';
-import TrendingCarousel from '../components/TrendingCarousel';
-import GenreSelector from '../components/GenreSelector';
-import BookCard from '../components/BookCard';
-
-const mockBooks = [
-  {
-    id: '6',
-    title: 'Where the Crawdads Sing',
-    author: 'Delia Owens',
-    cover: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=400&fit=crop',
-    duration: '41m',
-    genre: 'fiction',
-    description: 'Kya Clark tells her story of isolation and resilience in the marsh.'
-  },
-  {
-    id: '7',
-    title: 'The Midnight Library',
-    author: 'Matt Haig',
-    cover: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=400&fit=crop',
-    duration: '39m',
-    genre: 'fiction',
-    description: 'Nora Seed explores infinite possibilities between life and death.'
-  },
-  {
-    id: '8',
-    title: 'It Ends with Us',
-    author: 'Colleen Hoover',
-    cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&h=400&fit=crop',
-    duration: '47m',
-    genre: 'romance',
-    description: 'Lily Bloom shares her journey of love, loss, and finding strength.'
-  },
-  {
-    id: '9',
-    title: 'The Psychology of Money',
-    author: 'Morgan Housel',
-    cover: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop',
-    duration: '55m',
-    genre: 'biography',
-    description: 'Morgan Housel breaks down the behavioral aspects of finance.'
-  },
-];
+import { useAuth } from '@/contexts/AuthContext';
+import { useBooks } from '@/hooks/useBooks';
+import NetflixTrendingCarousel from '@/components/NetflixTrendingCarousel';
+import NetflixGenreSelector from '@/components/NetflixGenreSelector';
+import NetflixBookCard from '@/components/NetflixBookCard';
 
 const HomePage = () => {
+  const { user } = useAuth();
   const [selectedGenre, setSelectedGenre] = useState('all');
+  const { data: books, isLoading, error } = useBooks(selectedGenre);
 
-  const filteredBooks = selectedGenre === 'all' 
-    ? mockBooks 
-    : mockBooks.filter(book => book.genre === selectedGenre);
+  // Extract user's first name from full_name or email
+  const getUserFirstName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name.split(' ')[0];
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'there';
+  };
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-20">
-      {/* Header */}
-      <div className="px-4 pt-12 pb-4">
-        <h1 className="text-3xl font-bold text-gradient">
-          Good evening
+    <div className="min-h-screen bg-gray-950 pb-20 md:pb-8 md:pt-20">
+      {/* Personalized Header */}
+      <div className="px-4 pt-12 md:pt-8 pb-4">
+        <h1 className="text-2xl md:text-4xl font-bold text-white">
+          For {getUserFirstName()}
         </h1>
-        <p className="text-gray-400 mt-1">What would you like to listen to?</p>
+        <p className="text-gray-400 mt-1 text-sm md:text-base">What would you like to listen to today?</p>
       </div>
 
       {/* Trending Section */}
-      <TrendingCarousel />
+      <NetflixTrendingCarousel />
 
       {/* Genre Selection */}
-      <GenreSelector 
+      <NetflixGenreSelector 
         selectedGenre={selectedGenre} 
         onGenreSelect={setSelectedGenre} 
       />
 
-      {/* Filtered Books Grid */}
-      <div className="px-4">
-        <h2 className="text-xl font-bold text-white mb-4">
-          {selectedGenre === 'all' ? 'Popular Books' : `${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)} Books`}
+      {/* Popular Books Grid */}
+      <div className="px-4 pb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
+          {selectedGenre === 'all' ? 'Popular Books' : `Popular ${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)} Books`}
         </h2>
-        <div className="grid grid-cols-2 gap-4">
-          {filteredBooks.map((book) => (
-            <BookCard key={book.id} book={book} size="medium" />
-          ))}
-        </div>
+        
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="w-full h-56 md:h-64 bg-gray-800 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : error || !books?.length ? (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-lg">No books found for this genre.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {books.map((book) => (
+              <NetflixBookCard key={book.id} book={book} size="medium" />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

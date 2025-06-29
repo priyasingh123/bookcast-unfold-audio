@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      books: {
+        Row: {
+          author: string
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          genre: string
+          id: string
+          is_trending: boolean | null
+          popularity_score: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          genre: string
+          id?: string
+          is_trending?: boolean | null
+          popularity_score?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          genre?: string
+          id?: string
+          is_trending?: boolean | null
+          popularity_score?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

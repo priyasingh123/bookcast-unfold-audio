@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import SplashScreen from "./components/SplashScreen";
-import BottomNavigation from "./components/BottomNavigation";
+import ResponsiveNavigation from "./components/ResponsiveNavigation";
 import HomePage from "./pages/HomePage";
 import BookDetailPage from "./pages/BookDetailPage";
 import PlayerPage from "./pages/PlayerPage";
@@ -40,6 +40,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <div className="min-h-screen bg-gray-950">
+              <ResponsiveNavigation />
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/book/:id" element={<BookDetailPage />} />
@@ -60,7 +61,6 @@ const App = () => {
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              <BottomNavigation />
             </div>
           </BrowserRouter>
         </AuthProvider>
