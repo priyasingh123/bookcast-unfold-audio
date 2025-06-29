@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -32,15 +33,25 @@ export interface Genre {
   icon: string | null;
 }
 
-export const useBooks = () => {
+export const useBooks = (genre?: string, authorId?: string) => {
   return useQuery({
-    queryKey: ['books'],
+    queryKey: ['books', genre, authorId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('books')
         .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
+      
+      if (genre && genre !== 'all') {
+        query = query.eq('genre', genre);
+      }
+      
+      if (authorId) {
+        query = query.eq('author_id', authorId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
@@ -178,5 +189,25 @@ export const useSearchBooks = (searchQuery: string) => {
       })) as Book[];
     },
     enabled: !!searchQuery.trim()
+  });
+};
+
+// Admin hooks for managing books
+export const useAdminBooks = () => {
+  return useQuery({
+    queryKey: ['admin-books'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      return (data || []).map(book => ({
+        ...book,
+        cover: book.cover_url,
+      })) as Book[];
+    },
   });
 };
