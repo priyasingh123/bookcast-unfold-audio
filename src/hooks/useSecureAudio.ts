@@ -27,7 +27,7 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
   const generateSignedUrl = async (path: string): Promise<string> => {
     try {
       const { data, error } = await supabase.storage
-        .from('podcasts')
+        .from('book-audios')
         .createSignedUrl(path, 3600); // 1 hour expiry
 
       if (error) {
