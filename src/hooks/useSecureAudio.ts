@@ -23,21 +23,28 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
   const [progress, setProgress] = useState<ListeningProgress | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Generate public URL for the audio file
-  const generatePublicUrl = (path: string): string => {
+  // Generate public URL for the audio file or return if already a full URL
+  const generateAudioUrl = (path: string): string => {
     if (!path) {
       console.error('Audio path is empty');
       return '';
     }
 
-    console.log('Generating public URL for path:', path);
+    console.log('Processing audio path:', path);
+    
+    // Check if the path is already a full URL
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      console.log('Audio path is already a full URL:', path);
+      return path;
+    }
     
     try {
+      // If it's just a file path, generate the public URL
       const { data } = supabase.storage
         .from('book-audios')
         .getPublicUrl(path);
       
-      console.log('Generated public URL:', data.publicUrl);
+      console.log('Generated public URL from path:', data.publicUrl);
       return data.publicUrl;
     } catch (error) {
       console.error('Error generating public URL:', error);
@@ -94,7 +101,7 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
     }
   };
 
-  // Initialize audio with public URL
+  // Initialize audio with proper URL
   const initializeAudio = async () => {
     if (!audioPath) {
       console.error('No audio path provided');
@@ -105,15 +112,16 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
     console.log('Initializing audio with path:', audioPath);
     
     try {
-      const publicUrl = generatePublicUrl(audioPath);
+      const finalAudioUrl = generateAudioUrl(audioPath);
       
-      if (!publicUrl) {
-        console.error('Failed to generate public URL');
+      if (!finalAudioUrl) {
+        console.error('Failed to get valid audio URL');
         setIsLoading(false);
         return;
       }
       
-      setAudioUrl(publicUrl);
+      console.log('Final audio URL:', finalAudioUrl);
+      setAudioUrl(finalAudioUrl);
       
       // Load progress only if user is authenticated
       if (user) {

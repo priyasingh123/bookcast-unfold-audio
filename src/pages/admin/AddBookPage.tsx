@@ -109,6 +109,17 @@ const AddBookPage = () => {
           <CardTitle>Add New Book</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Audio Upload Instructions */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">📁 Audio File Setup Instructions</h3>
+            <ol className="text-sm text-blue-800 space-y-1">
+              <li>1. Upload your MP3 file to the 'book-audios' storage bucket</li>
+              <li>2. Copy the <strong>file name only</strong> (e.g., "alchemist.mp3")</li>
+              <li>3. Paste the file name in the "Audio File Path" field below</li>
+              <li>4. <strong>Don't paste the full URL</strong> - just the filename!</li>
+            </ol>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -193,14 +204,17 @@ const AddBookPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="audio_path">Audio File Path</Label>
+              <Label htmlFor="audio_path">Audio File Path *</Label>
               <Input
                 id="audio_path"
                 type="text"
                 value={formData.audio_path}
                 onChange={(e) => handleInputChange('audio_path', e.target.value)}
-                placeholder="audio/book-file.mp3"
+                placeholder="filename.mp3 (just the filename, not the full URL)"
               />
+              <p className="text-sm text-gray-600 mt-1">
+                Enter only the filename (e.g., "alchemist.mp3"), not the full URL
+              </p>
             </div>
 
             <div className="flex gap-4 pt-4">
