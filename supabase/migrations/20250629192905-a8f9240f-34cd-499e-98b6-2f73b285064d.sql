@@ -1,24 +1,20 @@
 
--- Create a private storage bucket for podcasts
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('podcasts', 'podcasts', false);
-
--- Create RLS policies for the podcasts bucket
-CREATE POLICY "Authenticated users can view podcast files"
+-- Create RLS policies for the book-audios bucket (assuming it already exists)
+CREATE POLICY "Authenticated users can view book audio files"
 ON storage.objects FOR SELECT
-USING (bucket_id = 'podcasts' AND auth.role() = 'authenticated');
+USING (bucket_id = 'book-audios' AND auth.role() = 'authenticated');
 
-CREATE POLICY "Authenticated users can insert podcast files"
+CREATE POLICY "Authenticated users can insert book audio files"
 ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'podcasts' AND auth.role() = 'authenticated');
+WITH CHECK (bucket_id = 'book-audios' AND auth.role() = 'authenticated');
 
-CREATE POLICY "Authenticated users can update podcast files"
+CREATE POLICY "Authenticated users can update book audio files"
 ON storage.objects FOR UPDATE
-USING (bucket_id = 'podcasts' AND auth.role() = 'authenticated');
+USING (bucket_id = 'book-audios' AND auth.role() = 'authenticated');
 
-CREATE POLICY "Authenticated users can delete podcast files"
+CREATE POLICY "Authenticated users can delete book audio files"
 ON storage.objects FOR DELETE
-USING (bucket_id = 'podcasts' AND auth.role() = 'authenticated');
+USING (bucket_id = 'book-audios' AND auth.role() = 'authenticated');
 
 -- Create a table to track user listening progress
 CREATE TABLE public.listening_progress (
