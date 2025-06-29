@@ -21,11 +21,6 @@ const mockBook = {
   guest: "Evelyn Hugo",
 };
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_KEY
-);
-
 const PlayerPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -47,6 +42,15 @@ const PlayerPage = () => {
 
     fetchAudio();
   }, []);
+
+  try {
+    const supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_KEY
+    );
+  } catch (error) {
+    console.log("error occured");
+  }
 
   const togglePlay = () => {
     if (audioRef.current) {
