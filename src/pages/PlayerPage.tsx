@@ -11,22 +11,20 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-const REACT_APP_SUPABASE_URL = "https://hryrkyufzevewzovwqer.supabase.co";
-const REACT_APP_SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyeXJreXVmemV2ZXd6b3Z3cWVyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTEyMTMyMCwiZXhwIjoyMDY2Njk3MzIwfQ._53yFYdSJbcDzvegAloxrAeuvHdnVMyN4Yu2KsYqt4Y";
-
 const mockBook = {
   id: "1",
   title: "The Seven Husbands of Evelyn Hugo",
   author: "Taylor Jenkins Reid",
   cover:
     "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop",
-  duration: 2700, // in seconds (45 minutes)
   host: "Sarah Chen",
   guest: "Evelyn Hugo",
 };
 
-const supabase = createClient(REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_KEY);
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_KEY
+);
 
 const PlayerPage = () => {
   const { id } = useParams();
@@ -40,13 +38,8 @@ const PlayerPage = () => {
 
   useEffect(() => {
     const fetchAudio = async () => {
-      const {
-        data: { publicUrl },
-      } = supabase.storage
-        .from("podcasts")
-        .getPublicUrl(
-          "https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/public/podcasts//alchemist.mp3"
-        );
+      const publicUrl =
+        "https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80NDY1YTNiMy05OTA1LTQ5OGYtOTJkNS1hNTdiMmQ2MzM5NzQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwb2RjYXN0cy9hbGNoZW1pc3QubXAzIiwiaWF0IjoxNzUxMTgzNzkxLCJleHAiOjE3ODI3MTk3OTF9.bCmDItRBk6Gn7kZ9uYd6tfOtW6wdw5wHYUaa8JAo_jA";
 
       setAudioUrl(publicUrl);
     };
@@ -73,15 +66,15 @@ const PlayerPage = () => {
 
     // fetchSignedUrl();
   }, []);
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentTime((prev) => Math.min(prev + 1, mockBook.duration));
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying]);
+  // useEffect(() => {
+  //   let interval: NodeJS.Timeout;
+  //   if (isPlaying) {
+  //     interval = setInterval(() => {
+  //       setCurrentTime((prev) => Math.min(prev + 1, mockBook.duration));
+  //     }, 1000);
+  //   }
+  //   return () => clearInterval(interval);
+  // }, [isPlaying]);
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -109,12 +102,15 @@ const PlayerPage = () => {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${Math.ceil(secs)}`;
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTime = parseInt(e.target.value);
     setCurrentTime(newTime);
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
+    }
   };
 
   const handleShare = () => {
@@ -174,14 +170,14 @@ const PlayerPage = () => {
           <input
             type="range"
             min="0"
-            max={mockBook.duration}
+            max={duration}
             value={currentTime}
             onChange={handleSeek}
             className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
           />
           <div className="flex justify-between text-gray-400 text-sm mt-2">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(mockBook.duration)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
 
@@ -190,6 +186,21 @@ const PlayerPage = () => {
           <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
             <SkipBack size={28} className="text-white" />
           </button>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={togglePlay}
+              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
+            >
+              {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+            </button>
+            <audio
+              ref={audioRef}
+              src={audioUrl}
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={handleLoadedMetadata}
+            />
+          </div>
 
           {/* <button
             onClick={() => setIsPlaying(!isPlaying)}
@@ -200,20 +211,19 @@ const PlayerPage = () => {
             ) : (
               <Play size={32} className="text-black ml-1" />
             )}
-          </button> */}
-          {/* <audio
+          </button>
+          <audio
             ref={audioRef}
             src={audioUrl}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
           /> */}
-          <audio controls>
-            <source
-              src="https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/public/podcasts//alchemist.mp3"
-              type="audio/mpeg"
-            />
-            Your browser does not support the audio element.
-          </audio>
+          {/* {audioUrl && (
+            <audio controls>
+              <source src={audioUrl} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+          )} */}
 
           <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
             <SkipForward size={28} className="text-white" />
