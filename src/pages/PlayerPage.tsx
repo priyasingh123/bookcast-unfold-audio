@@ -38,8 +38,9 @@ const PlayerPage = () => {
 
   useEffect(() => {
     const fetchAudio = async () => {
-      const publicUrl =
-        "https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80NDY1YTNiMy05OTA1LTQ5OGYtOTJkNS1hNTdiMmQ2MzM5NzQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwb2RjYXN0cy9hbGNoZW1pc3QubXAzIiwiaWF0IjoxNzUxMTgzNzkxLCJleHAiOjE3ODI3MTk3OTF9.bCmDItRBk6Gn7kZ9uYd6tfOtW6wdw5wHYUaa8JAo_jA";
+      const publicUrl = `https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=${
+        import.meta.env.VITE_AUDIO_TOKEN
+      }`;
 
       setAudioUrl(publicUrl);
     };
