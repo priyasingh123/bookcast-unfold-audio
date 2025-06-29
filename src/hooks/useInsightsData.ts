@@ -31,16 +31,19 @@ export const useInsightsData = () => {
         .eq('status', 'active')
         .limit(5);
 
-      // Get user stats for power users
+      // Get user stats for power users - using separate queries to avoid relation issues
       const { data: userStats } = await supabase
         .from('user_stats')
-        .select(`
-          total_listening_time,
-          books_completed,
-          profiles(full_name)
-        `)
+        .select('*')
         .order('total_listening_time', { ascending: false })
         .limit(5);
+
+      // Get user profiles separately
+      const userIds = userStats?.map(stat => stat.user_id) || [];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', userIds);
 
       // Get genres distribution
       const { data: genreStats } = await supabase
@@ -70,14 +73,15 @@ export const useInsightsData = () => {
         completion: Math.floor(Math.random() * 30) + 70 // Random completion rate between 70-100%
       })) || [];
 
-      // Format power users
+      // Format power users by combining stats with profiles
       const powerUsers = userStats?.map((stat, index) => {
-        const hours = Math.floor(stat.total_listening_time / 60);
-        const minutes = stat.total_listening_time % 60;
+        const profile = profiles?.find(p => p.id === stat.user_id);
+        const hours = Math.floor((stat.total_listening_time || 0) / 60);
+        const minutes = (stat.total_listening_time || 0) % 60;
         return {
-          name: stat.profiles?.full_name || `User ${index + 1}`,
+          name: profile?.full_name || `User ${index + 1}`,
           totalTime: `${hours}h ${minutes}m`,
-          booksCompleted: stat.books_completed
+          booksCompleted: stat.books_completed || 0
         };
       }) || [];
 

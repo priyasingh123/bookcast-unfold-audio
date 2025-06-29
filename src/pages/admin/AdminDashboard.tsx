@@ -2,6 +2,15 @@
 import { Clock, Heart, TrendingUp, Users } from 'lucide-react';
 import { useAdminStats } from '@/hooks/useAdminStats';
 
+interface AdminStatsData {
+  totalListeningTime: number;
+  totalUsers: number;
+  totalBooks: number;
+  activeToday: number;
+  topBooks: Array<{ title: string; author: string; likes_count: number }>;
+  topCategories: Array<{ name: string; percentage: number }>;
+}
+
 const AdminDashboard = () => {
   const { data: statsData, isLoading, error } = useAdminStats();
 
@@ -41,15 +50,18 @@ const AdminDashboard = () => {
     );
   }
 
+  // Parse the JSON data with proper typing
+  const parsedData = (typeof statsData === 'string' ? JSON.parse(statsData) : statsData) as AdminStatsData;
+  
   const stats = {
-    totalListeningTime: statsData?.totalListeningTime || 0,
-    totalUsers: statsData?.totalUsers || 0,
-    totalBooks: statsData?.totalBooks || 0,
-    activeToday: statsData?.activeToday || 0
+    totalListeningTime: parsedData?.totalListeningTime || 0,
+    totalUsers: parsedData?.totalUsers || 0,
+    totalBooks: parsedData?.totalBooks || 0,
+    activeToday: parsedData?.activeToday || 0
   };
 
-  const topBooks = statsData?.topBooks || [];
-  const topCategories = statsData?.topCategories || [];
+  const topBooks = parsedData?.topBooks || [];
+  const topCategories = parsedData?.topCategories || [];
 
   return (
     <div className="space-y-6">
