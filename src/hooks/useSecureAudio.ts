@@ -25,11 +25,24 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
 
   // Generate public URL for the audio file
   const generatePublicUrl = (path: string): string => {
-    const { data } = supabase.storage
-      .from('book-audios')
-      .getPublicUrl(path);
+    if (!path) {
+      console.error('Audio path is empty');
+      return '';
+    }
+
+    console.log('Generating public URL for path:', path);
     
-    return data.publicUrl;
+    try {
+      const { data } = supabase.storage
+        .from('book-audios')
+        .getPublicUrl(path);
+      
+      console.log('Generated public URL:', data.publicUrl);
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error generating public URL:', error);
+      return '';
+    }
   };
 
   // Load user's listening progress
@@ -83,11 +96,23 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
 
   // Initialize audio with public URL
   const initializeAudio = async () => {
-    if (!audioPath) return;
+    if (!audioPath) {
+      console.error('No audio path provided');
+      return;
+    }
 
     setIsLoading(true);
+    console.log('Initializing audio with path:', audioPath);
+    
     try {
       const publicUrl = generatePublicUrl(audioPath);
+      
+      if (!publicUrl) {
+        console.error('Failed to generate public URL');
+        setIsLoading(false);
+        return;
+      }
+      
       setAudioUrl(publicUrl);
       
       // Load progress only if user is authenticated
@@ -119,6 +144,7 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
     if (audioRef.current) {
       const audioDuration = audioRef.current.duration;
       setDuration(audioDuration);
+      console.log('Audio duration loaded:', audioDuration);
       
       // Resume from saved position (only for authenticated users)
       if (user && progress && progress.current_position > 0) {
@@ -138,7 +164,10 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
 
   // Play/pause toggle
   const togglePlay = async () => {
-    if (!audioRef.current || !audioUrl) return;
+    if (!audioRef.current || !audioUrl) {
+      console.error('Audio element or URL not ready');
+      return;
+    }
 
     try {
       if (isPlaying) {
@@ -148,6 +177,7 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
           saveProgress(currentTime);
         }
       } else {
+        console.log('Attempting to play audio from URL:', audioUrl);
         await audioRef.current.play();
         setIsPlaying(true);
       }
@@ -177,6 +207,7 @@ export const useSecureAudio = ({ bookId, audioPath }: UseSecureAudioProps) => {
 
   useEffect(() => {
     if (audioPath) {
+      console.log('Audio path changed, reinitializing:', audioPath);
       initializeAudio();
     }
   }, [user, audioPath, bookId]);
