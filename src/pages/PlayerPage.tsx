@@ -3,30 +3,58 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Share, Heart, ChevronDown } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Book } from '@/hooks/useBooks';
 import SecureAudioPlayer from '@/components/SecureAudioPlayer';
-
-const mockBook = {
-  id: "1",
-  title: "The Seven Husbands of Evelyn Hugo",
-  author: "Taylor Jenkins Reid",
-  cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop",
-  host: "Sarah Chen",
-  guest: "Evelyn Hugo",
-  audioPath: "alchemist.mp3" // This should come from your books database
-};
 
 const PlayerPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [book, setBook] = useState<Book | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  useEffect(() => {
+    const fetchBook = async () => {
+      if (!id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('books')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching book:', error);
+          return;
+        }
+
+        if (data) {
+          setBook({
+            ...data,
+            cover: data.cover_url,
+          });
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBook();
+  }, [id]);
+
   const handleShare = () => {
+    if (!book) return;
+    
     if (navigator.share) {
       navigator.share({
-        title: mockBook.title,
-        text: `Listen to ${mockBook.title} by ${mockBook.author}`,
+        title: book.title,
+        text: `Listen to ${book.title} by ${book.author}`,
         url: window.location.href,
       });
     }
@@ -35,6 +63,22 @@ const PlayerPage = () => {
   const handlePlayStateChange = (playing: boolean) => {
     setIsPlaying(playing);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-lg">Book not found</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
@@ -64,8 +108,8 @@ const PlayerPage = () => {
       <div className="flex-1 flex items-center justify-center px-8 py-8">
         <div className="w-full max-w-sm">
           <img
-            src={mockBook.cover}
-            alt={mockBook.title}
+            src={book.cover || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop'}
+            alt={book.title}
             className="w-full aspect-square object-cover rounded-2xl shadow-2xl"
           />
         </div>
@@ -76,18 +120,19 @@ const PlayerPage = () => {
         {/* Track Info */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white mb-2 leading-tight">
-            {mockBook.title}
+            {book.title}
           </h1>
-          <p className="text-gray-400 mb-1">{mockBook.author}</p>
+          <p className="text-gray-400 mb-1">{book.author}</p>
           <p className="text-gray-500 text-sm">
-            Host: {mockBook.host} • Guest: {mockBook.guest}
+            {book.genre}
+            {book.duration && ` • ${book.duration}`}
           </p>
         </div>
 
         {/* Public Audio Player */}
         <SecureAudioPlayer
           bookId={id || '1'}
-          audioPath={mockBook.audioPath}
+          audioPath={book.audio_path || 'alchemist.mp3'}
           onPlayStateChange={handlePlayStateChange}
         />
 

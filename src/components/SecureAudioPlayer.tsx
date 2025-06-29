@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, RotateCcw, Gauge } from 'lucide-react';
 import { useSecureAudio } from '@/hooks/useSecureAudio';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,6 +16,7 @@ const SecureAudioPlayer: React.FC<SecureAudioPlayerProps> = ({
   onPlayStateChange
 }) => {
   const { user } = useAuth();
+  const [currentSpeed, setCurrentSpeed] = React.useState(1);
   const {
     audioRef,
     audioUrl,
@@ -46,6 +47,15 @@ const SecureAudioPlayer: React.FC<SecureAudioPlayerProps> = ({
     const newTime = parseFloat(e.target.value);
     seekTo(newTime);
   };
+
+  const handleSpeedChange = (speed: number) => {
+    setCurrentSpeed(speed);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  };
+
+  const speedOptions = [0.75, 1, 1.25, 1.5, 2];
 
   if (isLoading) {
     return (
@@ -142,23 +152,25 @@ const SecureAudioPlayer: React.FC<SecureAudioPlayerProps> = ({
         </button>
       </div>
 
-      {/* Playback Speed Control */}
-      <div className="flex items-center justify-center mt-4">
-        <select
-          className="bg-gray-800 text-white px-3 py-1 rounded text-sm"
-          onChange={(e) => {
-            if (audioRef.current) {
-              audioRef.current.playbackRate = parseFloat(e.target.value);
-            }
-          }}
-          defaultValue="1"
-        >
-          <option value="0.75">0.75x</option>
-          <option value="1">1x</option>
-          <option value="1.25">1.25x</option>
-          <option value="1.5">1.5x</option>
-          <option value="2">2x</option>
-        </select>
+      {/* Enhanced Playback Speed Control */}
+      <div className="flex items-center justify-center mt-6">
+        <div className="bg-gray-800 rounded-full p-1 flex items-center gap-1">
+          <Gauge size={16} className="text-gray-400 ml-2" />
+          <span className="text-gray-400 text-sm mr-2">Speed</span>
+          {speedOptions.map((speed) => (
+            <button
+              key={speed}
+              onClick={() => handleSpeedChange(speed)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
+                currentSpeed === speed
+                  ? 'bg-white text-black shadow-md'
+                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+              }`}
+            >
+              {speed}x
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
