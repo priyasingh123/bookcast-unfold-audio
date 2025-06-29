@@ -1,17 +1,32 @@
+import { useState, useEffect, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Share,
+  Heart,
+  ChevronDown,
+} from "lucide-react";
 
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Pause, SkipBack, SkipForward, Share, Heart, ChevronDown } from 'lucide-react';
+const REACT_APP_SUPABASE_URL = "https://hryrkyufzevewzovwqer.supabase.co";
+const REACT_APP_SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyeXJreXVmemV2ZXd6b3Z3cWVyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTEyMTMyMCwiZXhwIjoyMDY2Njk3MzIwfQ._53yFYdSJbcDzvegAloxrAeuvHdnVMyN4Yu2KsYqt4Y";
 
 const mockBook = {
-  id: '1',
-  title: 'The Seven Husbands of Evelyn Hugo',
-  author: 'Taylor Jenkins Reid',
-  cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop',
+  id: "1",
+  title: "The Seven Husbands of Evelyn Hugo",
+  author: "Taylor Jenkins Reid",
+  cover:
+    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop",
   duration: 2700, // in seconds (45 minutes)
-  host: 'Sarah Chen',
-  guest: 'Evelyn Hugo'
+  host: "Sarah Chen",
+  guest: "Evelyn Hugo",
 };
+
+const supabase = createClient(REACT_APP_SUPABASE_URL, REACT_APP_SUPABASE_KEY);
 
 const PlayerPage = () => {
   const { id } = useParams();
@@ -19,21 +34,82 @@ const PlayerPage = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioUrl, setAudioUrl] = useState("");
 
+  useEffect(() => {
+    const fetchAudio = async () => {
+      const {
+        data: { publicUrl },
+      } = supabase.storage
+        .from("podcasts")
+        .getPublicUrl(
+          "https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/public/podcasts//alchemist.mp3"
+        );
+
+      setAudioUrl(publicUrl);
+    };
+
+    fetchAudio();
+
+    // const fetchSignedUrl = async () => {
+    //   try {
+    //     const {
+    //       data: { signedUrl },
+    //     } = await supabase.storage
+    //       .from("podcasts")
+    //       .createSignedUrl(
+    //         "https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80NDY1YTNiMy05OTA1LTQ5OGYtOTJkNS1hNTdiMmQ2MzM5NzQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwb2RjYXN0cy9hbGNoZW1pc3QubXAzIiwiaWF0IjoxNzUxMTI2MzAzLCJleHAiOjE3NTE3MzExMDN9.rC5DD5fiscBjl4AQ-7r2tDfwLJs6UWy8Suox1qJ5cD8",
+    //         604800
+    //       );
+
+    //     // Do something with signedUrl
+    //     console.log(signedUrl);
+    //   } catch (error) {
+    //     console.error("Error fetching signed URL:", error);
+    //   }
+    // };
+
+    // fetchSignedUrl();
+  }, []);
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isPlaying) {
       interval = setInterval(() => {
-        setCurrentTime(prev => Math.min(prev + 1, mockBook.duration));
+        setCurrentTime((prev) => Math.min(prev + 1, mockBook.duration));
       }, 1000);
     }
     return () => clearInterval(interval);
   }, [isPlaying]);
 
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,8 +190,8 @@ const PlayerPage = () => {
           <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
             <SkipBack size={28} className="text-white" />
           </button>
-          
-          <button
+
+          {/* <button
             onClick={() => setIsPlaying(!isPlaying)}
             className="w-16 h-16 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
           >
@@ -124,8 +200,21 @@ const PlayerPage = () => {
             ) : (
               <Play size={32} className="text-black ml-1" />
             )}
-          </button>
-          
+          </button> */}
+          {/* <audio
+            ref={audioRef}
+            src={audioUrl}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+          /> */}
+          <audio controls>
+            <source
+              src="https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/public/podcasts//alchemist.mp3"
+              type="audio/mpeg"
+            />
+            Your browser does not support the audio element.
+          </audio>
+
           <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
             <SkipForward size={28} className="text-white" />
           </button>
@@ -136,14 +225,18 @@ const PlayerPage = () => {
           <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
             <Share size={24} className="text-gray-400 hover:text-white" />
           </button>
-          
+
           <button
             onClick={() => setIsLiked(!isLiked)}
             className="p-2 hover:bg-gray-800 rounded-full transition-colors"
           >
-            <Heart 
-              size={24} 
-              className={`${isLiked ? 'text-purple-400 fill-current' : 'text-gray-400 hover:text-white'}`}
+            <Heart
+              size={24}
+              className={`${
+                isLiked
+                  ? "text-purple-400 fill-current"
+                  : "text-gray-400 hover:text-white"
+              }`}
             />
           </button>
         </div>
