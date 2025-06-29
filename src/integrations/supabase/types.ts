@@ -158,6 +158,33 @@ export type Database = {
         }
         Relationships: []
       }
+      listening_progress: {
+        Row: {
+          book_id: string
+          current_position: number
+          duration: number | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          current_position?: number
+          duration?: number | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          current_position?: number
+          duration?: number | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

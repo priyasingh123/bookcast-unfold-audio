@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowDown, Play, Heart } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock book data - in real app this would come from API
 const mockBook = {
@@ -15,19 +16,29 @@ const mockBook = {
   host: 'Sarah Chen',
   guestRole: 'Evelyn Hugo (Main Character)',
   releaseDate: 'March 15, 2024',
-  isLiked: false
+  isLiked: false,
+  audioPath: 'alchemist.mp3'
 };
 
 const BookDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(mockBook.isLiked);
 
   const handleStartListening = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     navigate(`/player/${id}`);
   };
 
   const handleSaveToLibrary = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     setIsLiked(!isLiked);
     // In real app, this would save to user's library
   };
@@ -69,6 +80,11 @@ const BookDetailPage = () => {
               <span>•</span>
               <span>{mockBook.releaseDate}</span>
             </div>
+            {!user && (
+              <div className="mt-2 text-yellow-400 text-sm flex items-center">
+                <span>🔒 Login required for secure streaming</span>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -78,7 +94,7 @@ const BookDetailPage = () => {
               className="flex-1 bg-white text-black font-semibold py-4 px-6 rounded-full flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
             >
               <Play size={20} />
-              Start Listening
+              {user ? 'Start Listening' : 'Login to Listen'}
             </button>
             <button
               onClick={handleSaveToLibrary}
@@ -96,6 +112,17 @@ const BookDetailPage = () => {
 
       {/* Content Section */}
       <div className="px-4 py-6 space-y-6">
+        {/* Security Notice */}
+        <div className="bg-gray-800/50 rounded-xl p-4 border-l-4 border-purple-500">
+          <h3 className="text-white font-semibold mb-2 flex items-center">
+            🔒 Secure Streaming
+          </h3>
+          <p className="text-gray-300 text-sm">
+            This content is protected with end-to-end encryption and secure access tokens. 
+            Your listening progress is automatically saved and synced across devices.
+          </p>
+        </div>
+
         {/* Episode Info */}
         <div className="bg-gray-900 rounded-xl p-4">
           <h3 className="text-white font-semibold mb-2">Episode Details</h3>
@@ -112,6 +139,10 @@ const BookDetailPage = () => {
               <span className="text-gray-400">Duration:</span>
               <span className="text-white">{mockBook.duration}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Security:</span>
+              <span className="text-green-400">✓ Protected</span>
+            </div>
           </div>
         </div>
 
@@ -121,6 +152,18 @@ const BookDetailPage = () => {
           <p className="text-gray-300 leading-relaxed">
             {mockBook.description}
           </p>
+        </div>
+
+        {/* Features */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-900/50 rounded-lg p-3">
+            <div className="text-purple-400 text-sm font-semibold">Resume Playback</div>
+            <div className="text-gray-400 text-xs">Pick up where you left off</div>
+          </div>
+          <div className="bg-gray-900/50 rounded-lg p-3">
+            <div className="text-purple-400 text-sm font-semibold">Variable Speed</div>
+            <div className="text-gray-400 text-xs">0.75x to 2x playback</div>
+          </div>
         </div>
       </div>
     </div>

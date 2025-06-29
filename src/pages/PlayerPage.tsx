@@ -1,93 +1,34 @@
-import { useState, useEffect, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
+
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  Share,
-  Heart,
-  ChevronDown,
-} from "lucide-react";
+import { Share, Heart, ChevronDown } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
+import SecureAudioPlayer from '@/components/SecureAudioPlayer';
 
 const mockBook = {
   id: "1",
   title: "The Seven Husbands of Evelyn Hugo",
   author: "Taylor Jenkins Reid",
-  cover:
-    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop",
+  cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop",
   host: "Sarah Chen",
   guest: "Evelyn Hugo",
+  audioPath: "alchemist.mp3" // This should come from your books database
 };
 
 const PlayerPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [audioUrl, setAudioUrl] = useState("");
+  const [isPlaying, setIsPlaying] = useState(false);
 
+  // Redirect to auth if user is not logged in
   useEffect(() => {
-    const fetchAudio = async () => {
-      const publicUrl = `https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=${
-        import.meta.env.VITE_AUDIO_TOKEN
-      }`;
-
-      setAudioUrl(publicUrl);
-    };
-
-    fetchAudio();
-  }, []);
-
-  try {
-    const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_KEY
-    );
-  } catch (error) {
-    console.log("error occured");
-  }
-
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
+    if (!user) {
+      navigate('/auth');
+      return;
     }
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${Math.ceil(secs)}`;
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseInt(e.target.value);
-    setCurrentTime(newTime);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-    }
-  };
+  }, [user, navigate]);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -98,6 +39,26 @@ const PlayerPage = () => {
       });
     }
   };
+
+  const handlePlayStateChange = (playing: boolean) => {
+    setIsPlaying(playing);
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-center">
+          <p className="mb-4">Please log in to listen to podcasts</p>
+          <button 
+            onClick={() => navigate('/auth')}
+            className="bg-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:bg-purple-700 transition-colors"
+          >
+            Log In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col">
@@ -110,10 +71,14 @@ const PlayerPage = () => {
           <ChevronDown size={24} className="text-white" />
         </button>
         <div className="text-center">
-          <p className="text-gray-400 text-sm">PLAYING FROM LIBRARY</p>
+          <p className="text-gray-400 text-sm">SECURE STREAMING</p>
+          <p className="text-gray-500 text-xs">Protected Content</p>
         </div>
-        <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
-          <Share size={24} className="text-white" onClick={handleShare} />
+        <button 
+          className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+          onClick={handleShare}
+        >
+          <Share size={24} className="text-white" />
         </button>
       </div>
 
@@ -141,74 +106,19 @@ const PlayerPage = () => {
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-6">
-          <input
-            type="range"
-            min="0"
-            max={duration}
-            value={currentTime}
-            onChange={handleSeek}
-            className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-          />
-          <div className="flex justify-between text-gray-400 text-sm mt-2">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-
-        {/* Control Buttons */}
-        <div className="flex items-center justify-center gap-8 mb-6">
-          <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
-            <SkipBack size={28} className="text-white" />
-          </button>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={togglePlay}
-              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200"
-            >
-              {isPlaying ? <Pause size={32} /> : <Play size={32} />}
-            </button>
-            <audio
-              ref={audioRef}
-              src={audioUrl}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-            />
-          </div>
-
-          {/* <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="w-16 h-16 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
-          >
-            {isPlaying ? (
-              <Pause size={32} className="text-black" />
-            ) : (
-              <Play size={32} className="text-black ml-1" />
-            )}
-          </button>
-          <audio
-            ref={audioRef}
-            src={audioUrl}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-          /> */}
-          {/* {audioUrl && (
-            <audio controls>
-              <source src={audioUrl} type="audio/mpeg" />
-              Your browser does not support the audio element.
-            </audio>
-          )} */}
-
-          <button className="p-3 hover:bg-gray-800 rounded-full transition-colors">
-            <SkipForward size={28} className="text-white" />
-          </button>
-        </div>
+        {/* Secure Audio Player */}
+        <SecureAudioPlayer
+          bookId={id || '1'}
+          audioPath={mockBook.audioPath}
+          onPlayStateChange={handlePlayStateChange}
+        />
 
         {/* Bottom Actions */}
-        <div className="flex items-center justify-between">
-          <button className="p-2 hover:bg-gray-800 rounded-full transition-colors">
+        <div className="flex items-center justify-between mt-8">
+          <button 
+            className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+            onClick={handleShare}
+          >
             <Share size={24} className="text-gray-400 hover:text-white" />
           </button>
 
