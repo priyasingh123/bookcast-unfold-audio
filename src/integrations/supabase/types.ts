@@ -15,6 +15,7 @@ export type Database = {
           email: string
           id: string
           invited_by: string | null
+          password: string | null
           role: string
           status: string
           updated_at: string
@@ -25,6 +26,7 @@ export type Database = {
           email: string
           id?: string
           invited_by?: string | null
+          password?: string | null
           role?: string
           status?: string
           updated_at?: string
@@ -35,6 +37,7 @@ export type Database = {
           email?: string
           id?: string
           invited_by?: string | null
+          password?: string | null
           role?: string
           status?: string
           updated_at?: string
