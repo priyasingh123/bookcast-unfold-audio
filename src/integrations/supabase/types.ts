@@ -9,9 +9,37 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      authors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       books: {
         Row: {
           author: string
+          author_id: string | null
           cover_url: string | null
           created_at: string | null
           description: string | null
@@ -25,6 +53,7 @@ export type Database = {
         }
         Insert: {
           author: string
+          author_id?: string | null
           cover_url?: string | null
           created_at?: string | null
           description?: string | null
@@ -38,6 +67,7 @@ export type Database = {
         }
         Update: {
           author?: string
+          author_id?: string | null
           cover_url?: string | null
           created_at?: string | null
           description?: string | null
@@ -48,6 +78,41 @@ export type Database = {
           popularity_score?: number | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      genres: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          gradient: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          gradient?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          gradient?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
         }
         Relationships: []
       }

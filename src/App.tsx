@@ -13,6 +13,8 @@ import BookDetailPage from "./pages/BookDetailPage";
 import PlayerPage from "./pages/PlayerPage";
 import LibraryPage from "./pages/LibraryPage";
 import SearchPage from "./pages/SearchPage";
+import AuthorPage from "./pages/AuthorPage";
+import GenrePage from "./pages/GenrePage";
 import ProfilePage from "./pages/ProfilePage";
 import AuthPage from "./pages/AuthPage";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -47,6 +49,8 @@ const App = () => {
                 <Route path="/player/:id" element={<PlayerPage />} />
                 <Route path="/library" element={<LibraryPage />} />
                 <Route path="/search" element={<SearchPage />} />
+                <Route path="/author/:id" element={<AuthorPage />} />
+                <Route path="/genre/:genre" element={<GenrePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/auth" element={<AuthPage />} />
                 
