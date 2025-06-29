@@ -31,7 +31,7 @@ const NetflixBookCard = ({ book, size = 'medium', showStartListening = false }: 
     >
       <div className="relative mb-3">
         <img
-          src={book.cover_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop'}
+          src={book.cover || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop'}
           alt={book.title}
           className={`w-full ${imageSizes[size]} object-cover rounded-lg shadow-lg group-hover:shadow-2xl transition-all duration-300`}
         />
