@@ -1,36 +1,79 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowDown, Play, Heart } from 'lucide-react';
-
-// Mock book data - in real app this would come from API
-const mockBook = {
-  id: '1',
-  title: 'The Seven Husbands of Evelyn Hugo',
-  author: 'Taylor Jenkins Reid',
-  cover: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop',
-  duration: '45m',
-  genre: 'Romance',
-  description: 'Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story—but only to unknown magazine reporter Monique Grant. Join us for an intimate conversation with the legendary Evelyn Hugo herself as she reveals the truth behind her seven marriages, her rise to fame, and the shocking secret that could destroy everything.',
-  host: 'Sarah Chen',
-  guestRole: 'Evelyn Hugo (Main Character)',
-  releaseDate: 'March 15, 2024',
-  isLiked: false
-};
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Book } from '@/hooks/useBooks';
 
 const BookDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isLiked, setIsLiked] = useState(mockBook.isLiked);
+  const { user } = useAuth();
+  const [book, setBook] = useState<Book | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+
+  useEffect(() => {
+    const fetchBook = async () => {
+      if (!id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('books')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching book:', error);
+          return;
+        }
+
+        if (data) {
+          setBook({
+            ...data,
+            cover: data.cover_url,
+          });
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBook();
+  }, [id]);
 
   const handleStartListening = () => {
     navigate(`/player/${id}`);
   };
 
   const handleSaveToLibrary = () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     setIsLiked(!isLiked);
     // In real app, this would save to user's library
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-lg">Book not found</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 pb-20">
@@ -38,8 +81,8 @@ const BookDetailPage = () => {
       <div className="relative h-[70vh] overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={mockBook.cover}
-            alt={mockBook.title}
+            src={book.cover || 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=600&fit=crop'}
+            alt={book.title}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent" />
@@ -57,18 +100,31 @@ const BookDetailPage = () => {
         <div className="absolute bottom-8 left-4 right-4">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-white mb-2 leading-tight">
-              {mockBook.title}
+              {book.title}
             </h1>
             <p className="text-purple-300 text-lg mb-1">
-              by {mockBook.author}
+              by {book.author}
             </p>
             <div className="flex items-center gap-4 text-gray-300 text-sm">
-              <span>{mockBook.genre}</span>
-              <span>•</span>
-              <span>{mockBook.duration}</span>
-              <span>•</span>
-              <span>{mockBook.releaseDate}</span>
+              <span>{book.genre}</span>
+              {book.duration && (
+                <>
+                  <span>•</span>
+                  <span>{book.duration}</span>
+                </>
+              )}
+              {book.created_at && (
+                <>
+                  <span>•</span>
+                  <span>{new Date(book.created_at).toLocaleDateString()}</span>
+                </>
+              )}
             </div>
+            {!user && (
+              <div className="mt-2 text-green-400 text-sm flex items-center">
+                <span>🎵 Free to listen • Sign in to save progress</span>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
@@ -96,31 +152,66 @@ const BookDetailPage = () => {
 
       {/* Content Section */}
       <div className="px-4 py-6 space-y-6">
-        {/* Episode Info */}
+        {/* Public Access Notice */}
+        <div className="bg-green-800/20 rounded-xl p-4 border-l-4 border-green-500">
+          <h3 className="text-white font-semibold mb-2 flex items-center">
+            🎵 Free Public Access
+          </h3>
+          <p className="text-gray-300 text-sm">
+            This audiobook is freely available to everyone. 
+            {user ? ' Your listening progress is automatically saved.' : ' Sign in to save your progress and create playlists.'}
+          </p>
+        </div>
+
+        {/* Book Info */}
         <div className="bg-gray-900 rounded-xl p-4">
-          <h3 className="text-white font-semibold mb-2">Episode Details</h3>
+          <h3 className="text-white font-semibold mb-2">Book Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-400">Host:</span>
-              <span className="text-white">{mockBook.host}</span>
+              <span className="text-gray-400">Author:</span>
+              <span className="text-white">{book.author}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Guest:</span>
-              <span className="text-white">{mockBook.guestRole}</span>
+              <span className="text-gray-400">Genre:</span>
+              <span className="text-white">{book.genre}</span>
             </div>
+            {book.duration && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Duration:</span>
+                <span className="text-white">{book.duration}</span>
+              </div>
+            )}
             <div className="flex justify-between">
-              <span className="text-gray-400">Duration:</span>
-              <span className="text-white">{mockBook.duration}</span>
+              <span className="text-gray-400">Access:</span>
+              <span className="text-green-400">✓ Public</span>
             </div>
           </div>
         </div>
 
         {/* Description */}
-        <div>
-          <h3 className="text-white font-semibold mb-3">About This Episode</h3>
-          <p className="text-gray-300 leading-relaxed">
-            {mockBook.description}
-          </p>
+        {book.description && (
+          <div>
+            <h3 className="text-white font-semibold mb-3">About This Book</h3>
+            <p className="text-gray-300 leading-relaxed">
+              {book.description}
+            </p>
+          </div>
+        )}
+
+        {/* Features */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gray-900/50 rounded-lg p-3">
+            <div className="text-purple-400 text-sm font-semibold">
+              {user ? 'Resume Playback' : 'Free Access'}
+            </div>
+            <div className="text-gray-400 text-xs">
+              {user ? 'Pick up where you left off' : 'No login required'}
+            </div>
+          </div>
+          <div className="bg-gray-900/50 rounded-lg p-3">
+            <div className="text-purple-400 text-sm font-semibold">Variable Speed</div>
+            <div className="text-gray-400 text-xs">0.75x to 2x playback</div>
+          </div>
         </div>
       </div>
     </div>

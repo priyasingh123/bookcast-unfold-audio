@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useBooks, useAuthors } from '@/hooks/useBooks';
 import BookCard from '@/components/BookCard';

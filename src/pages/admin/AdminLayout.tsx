@@ -8,15 +8,23 @@ import {
   Bell, 
   BarChart3, 
   Menu,
-  X
+  X,
+  BookOpen,
+  UserPlus,
+  Upload,
+  Settings
 } from 'lucide-react';
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+  { icon: BookOpen, label: 'Manage Books', path: '/admin/manage-books' },
+  { icon: Upload, label: 'Bulk Upload', path: '/admin/bulk-upload' },
   { icon: Users, label: 'User Data', path: '/admin/users' },
+  { icon: UserPlus, label: 'Invite Admins', path: '/admin/invite-admins' },
   { icon: Plus, label: 'Add New Book', path: '/admin/add-book' },
   { icon: Bell, label: 'Notifications', path: '/admin/notifications' },
   { icon: BarChart3, label: 'Insights', path: '/admin/insights' },
+  { icon: Settings, label: 'Settings', path: '/admin/settings' },
 ];
 
 const AdminLayout = () => {
@@ -57,6 +65,7 @@ const AdminLayout = () => {
                         ? 'bg-purple-100 text-purple-700' 
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
+                    title={!sidebarOpen ? item.label : undefined}
                   >
                     <Icon size={20} />
                     {sidebarOpen && <span className="font-medium">{item.label}</span>}
