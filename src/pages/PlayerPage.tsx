@@ -21,6 +21,10 @@ const mockBook = {
   guest: "Evelyn Hugo",
 };
 
+const SUPABASE_URL = "https://hryrkyufzevewzovwqer.supabase.co";
+const SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyeXJreXVmemV2ZXd6b3Z3cWVyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTEyMTMyMCwiZXhwIjoyMDY2Njk3MzIwfQ._53yFYdSJbcDzvegAloxrAeuvHdnVMyN4Yu2KsYqt4Y";
+
 const PlayerPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -32,25 +36,19 @@ const PlayerPage = () => {
   const [audioUrl, setAudioUrl] = useState("");
 
   useEffect(() => {
+    try {
+      // const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch (error) {
+      console.log("error occured");
+    }
     const fetchAudio = async () => {
-      const publicUrl = `https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=${
-        import.meta.env.VITE_AUDIO_TOKEN
-      }`;
+      const publicUrl = `https://hryrkyufzevewzovwqer.supabase.co/storage/v1/object/sign/podcasts/alchemist.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80NDY1YTNiMy05OTA1LTQ5OGYtOTJkNS1hNTdiMmQ2MzM5NzQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwb2RjYXN0cy9hbGNoZW1pc3QubXAzIiwiaWF0IjoxNzUxMTgzNzkxLCJleHAiOjE3ODI3MTk3OTF9.bCmDItRBk6Gn7kZ9uYd6tfOtW6wdw5wHYUaa8JAo_jA`;
 
       setAudioUrl(publicUrl);
     };
 
     fetchAudio();
   }, []);
-
-  try {
-    const supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_KEY
-    );
-  } catch (error) {
-    console.log("error occured");
-  }
 
   const togglePlay = () => {
     if (audioRef.current) {
